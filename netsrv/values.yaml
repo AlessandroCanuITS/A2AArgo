@@ -1,0 +1,153 @@
+# Default values for netsrv.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+
+gwbridge:
+
+  replicaCount: 1
+
+  revisionHistoryLimit: 5
+
+  automountServiceAccountToken: false
+
+  image:
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  serviceAccount:
+    # Specifies whether a service account is used by deployment
+    enabled: false
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    # loadBalancerIP: "1.2.3.4"
+    annotations:
+    # cloud.google.com/load-balancer-type: "Internal"
+
+  resources: 
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    requests:
+      cpu: 25m
+      memory: 25Mi
+    limits:
+      cpu: 25m
+      memory: 25Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: 
+    cloud.google.com/gke-nodepool: net
+
+  tolerations: 
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/net
+      operator: Exists
+
+
+  affinity: 
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - gwbridge
+            topologyKey: kubernetes.io/hostname
+
+  config:
+    data: |-
+      {
+        "mqtt": {
+            "ca": "",
+            "host": "bus-mqtt",
+            "groupId": "gwbridge",
+            "id": "<overridden>",
+            "port": 1883,
+            "pwd": "",
+            "qos": 0,
+            "tls": false,
+            "usr": "gwbridge"
+        },
+        "server": {
+            "name": "gwbridge",
+            "service": "lora.patavinatech.com",
+            "port": 1780,
+            "id": "<overridden>"
+        },
+        "metrics": {
+            "host": "0.0.0.0",
+            "port": "9090"
+        },
+        "blackhole": {
+            "blacklog_1": [{
+                "type": "blocking",
+                "formatter": {
+                    "type": "json",
+                    "newline": false,
+                    "mapping": {
+                        "message": "@message",
+                        "timestamp": "@timestamp"
+                    },
+                    "routing": {
+                        "": ["timestamp", "message"],
+                        "/fields": "*"
+                    },
+                    "mutate": {
+                        "timestamp": "%Y-%m-%dT%H:%M:%S.%fZ",
+                        "severity": ["T", "D", "I", "W", "E", "F"]
+                    }
+                },
+                "sinks": [{
+                    "type": "console",
+                    "filter": {
+                        "type": "severity",
+                        "threshold": 2
+                    }
+                }]
+            }]
+        }
+      }
+
+  env:
+    JAEGER_AGENT_HOST: 
+    JAEGER_AGENT_PORT: 
+    JAEGER_SAMPLER_MANAGER_HOST_PORT: 
+    JAEGER_SAMPLER_PARAM: 
+    JAEGER_SAMPLER_TYPE: 
+    JAEGER_TRACEID_128BIT: 

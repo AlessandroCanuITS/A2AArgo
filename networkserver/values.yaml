@@ -1,5 +1,5 @@
-argocd:
-  image: https://hub.docker.com/repository/registry-1.docker.io/alessandrocanu/a2ahelmargo/:latest
+argo-cd:
+  images: https://hub.docker.com/repository/registry-1.docker.io/alessandrocanu/a2ahelmargo/:latest
 
 
 gwbridge:
